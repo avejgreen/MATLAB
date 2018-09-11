@@ -1,0 +1,28 @@
+function Phi = PhiCalculator(OldCrystal,gSurf)
+
+%% Find Phi value of gSurf
+ProjXYgSurf = [gSurf(1:2),0];
+
+PhiCos = (180/pi)*acos(ProjXYgSurf(1)/norm(ProjXYgSurf));
+PhiSin = (180/pi)*asin(ProjXYgSurf(2)/norm(ProjXYgSurf));
+
+Phi = PhiCos;
+Phi(PhiSin<0) = 360-Phi(PhiSin<0);
+
+%% Rotate all gVectors around z by -Phi
+zRotMat = ...
+    [cos(-Phi), -sin(-Phi),0;...
+    sin(-Phi),cos(-Phi),0,...
+    0,0,1];
+
+gVectorsAligned = OldCrystal.gVectors*zRotMat';
+gSurf = gSurf*zRotMat';
+
+%% Find Chi value of new gSurf
+Chi = (180/pi)*acos(gSurf(3)/norm(gSurf));
+
+%% Rotate all gVectors around y by -Chi
+
+test = 1;
+
+end
