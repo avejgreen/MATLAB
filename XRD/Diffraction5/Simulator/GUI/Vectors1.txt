@@ -1,0 +1,8 @@
+Vectors
+Material,Surface Plane,Notch Plane,Measurement Plane,Phi,Om2T,OmRel
+Al2O3,[0 1 2],[3 0 0],[0 1 2],-72.81,12.79,0.00
+Al2O3,[0 1 2],[3 0 0],[0 0 6],-162.81,20.84,57.61
+
+Measurement Plane
+Chi,Phi,Om2T Range,OmRelRange
+-0.00,-72.81,[12.79 20.84],[ ]
