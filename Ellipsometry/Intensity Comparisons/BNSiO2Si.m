@@ -1,0 +1,94 @@
+clear all;
+clc;
+
+%Input n, thickness values, and wavelengths
+NAir = 1.0003;
+NBN = 2.2;
+NSiO2 = [1.47569400000000,1.47462800000000,1.47363900000000,1.47272100000000,1.47186700000000,1.47106900000000,1.47032400000000,1.46962500000000,1.46896900000000,1.46835200000000,1.46777100000000,1.46722200000000,1.46670400000000,1.46621200000000,1.46574600000000,1.46530400000000,1.46488300000000,1.46448200000000,1.46409900000000,1.46373300000000,1.46338300000000,1.46304800000000,1.46272700000000,1.46241800000000,1.46212100000000,1.46183500000000,1.46156000000000,1.46129400000000,1.46103700000000,1.46078900000000,1.46054700000000,1.46031400000000,1.46008900000000,1.45986800000000,1.45965500000000,1.45944700000000];
+NSi = [5.63171600000000 - 0.285821300000000i,5.34655700000000 - 0.212582900000000i,5.13419000000000 - 0.160634600000000i,4.96260500000000 - 0.122018700000000i,4.81913900000000 - 0.0939212600000000i,4.69728900000000 - 0.0739159300000000i,4.59272700000000 - 0.0598907000000000i,4.50238500000000 - 0.0501741100000000i,4.42391700000000 - 0.0434724500000000i,4.35528000000000 - 0.0387762600000000i,4.29492700000000 - 0.0353747500000000i,4.24152700000000 - 0.0327590300000000i,4.19392100000000 - 0.0305925000000000i,4.15113400000000 - 0.0286754500000000i,4.11249400000000 - 0.0269094600000000i,4.07732400000000 - 0.0252482700000000i,4.04518300000000 - 0.0236772700000000i,4.01567700000000 - 0.0221908900000000i,3.98847100000000 - 0.0207852600000000i,3.96331000000000 - 0.0194575300000000i,3.93996900000000 - 0.0182043800000000i,3.91824200000000 - 0.0170216300000000i,3.89796000000000 - 0.0159055000000000i,3.87901700000000 - 0.0148545100000000i,3.86126100000000 - 0.0138637700000000i,3.84458500000000 - 0.0129302700000000i,3.82889500000000 - 0.0120509300000000i,3.81411400000000 - 0.0112231900000000i,3.80017700000000 - 0.0104448400000000i,3.78699700000000 - 0.00971188900000000i,3.77452000000000 - 0.00902226300000000i,3.76270800000000 - 0.00837446500000000i,3.75149300000000 - 0.00776502500000000i,3.74084000000000 - 0.00719237600000000i,3.73072000000000 - 0.00665514400000000i,3.72107900000000 - 0.00615027000000000i];
+
+BNThick = 3.3*10^-10;
+SiO2Thick = linspace(0,350e-9,176);
+
+wavelengths = linspace(400e-9,750e-9,36);
+polySiO2 = polyfit(wavelengths,NSiO2,7);
+polySiReal = polyfit(wavelengths,real(NSi),7);
+polySiImag = polyfit(wavelengths,imag(NSi),7);
+
+wavelengths = linspace(400e-9,750e-9,176);
+NSiO2 = polyval(polySiO2, wavelengths);
+NSiReal = polyval(polySiReal, wavelengths);
+NSiImag = polyval(polySiImag, wavelengths);
+NSi = NSiReal+1i*NSiImag;
+
+%Compute beta values
+bBN = zeros(1,176);
+bSiO2 = zeros(176,176);
+for a = 1:176   
+    for b = 1:176
+        bBN(a) = (2*pi*BNThick*NBN)/wavelengths(a);
+        bSiO2(a,b) = (2*pi*SiO2Thick(b)*NSiO2(a))/wavelengths(a);       
+    end   
+end
+
+%Compute 2 layer r values (p polarized)
+rAirBN = (NBN-NAir)/(NBN+NAir);
+rSiO2Si = zeros(1,176);
+rAirSiO2 = zeros(1,176);
+rBNSiO2 = zeros(1,176);
+for a = 1:176
+    rAirSiO2(a) = (NSiO2(a)-NAir)/(NSiO2(a)+NAir);
+    rBNSiO2(a) = (NSiO2(a)-NBN)/(NSiO2(a)+NBN);
+    rSiO2Si(a) = (NSi(a)-NSiO2(a))/(NSi(a)+NSiO2(a));
+end
+
+
+%Compute 3 layer r values (p polarized)
+rAirSiO2Si = zeros(176,176);
+rBNSiO2Si = zeros(176,176);
+for a = 1:176
+    for b = 1:176
+        rAirSiO2Si(a,b) = (rAirSiO2(a)+(rSiO2Si(a)*exp(-2i*bSiO2(a,b))))/(1+rAirSiO2(a)*(rSiO2Si(a)*exp(-2i*bSiO2(a,b))));
+        rBNSiO2Si(a,b) = (rBNSiO2(a)+(rSiO2Si(a)*exp(-2i*bSiO2(a,b))))/(1+rBNSiO2(a)*(rSiO2Si(a)*exp(-2i*bSiO2(a,b))));
+        
+    end
+end
+
+
+%Compute 4 layer r value (p polarized)
+rAirBNSiO2Si = zeros(176,176);
+for a = 1:176  
+    for b = 1:176    
+        rAirBNSiO2Si(a,b) = (rAirBN+rBNSiO2Si(a,b)*exp(-2i*bBN(a)))/(1+rAirBN*rBNSiO2Si(a,b)*exp(-2i*bBN(a)));       
+    end    
+end
+
+
+%Compute R values
+RAirBNSiO2Si = zeros(176,176);
+RAirSiO2Si = zeros(176,176);
+for a = 1:176    
+    for b = 1:176        
+        RAirBNSiO2Si(a,b) = rAirBNSiO2Si(a,b)*conj(rAirBNSiO2Si(a,b));  
+        RAirSiO2Si(a,b) = rAirSiO2Si(a,b)*conj(rAirSiO2Si(a,b ));  
+    end    
+end
+
+
+%Compute the comparison R value
+RCompare = zeros(176,176);
+for a = 1:176  
+    for b = 1:176       
+        RCompare(a,b) = (RAirBNSiO2Si(a,b)-RAirSiO2Si(a,b))/RAirSiO2Si(a,b);       
+    end   
+end
+
+
+%Create a mesh plot
+figure;
+mesh(SiO2Thick(1:176)*10^9,wavelengths*10^9,RCompare)
+xlabel('Oxide Thickness (nm)');
+ylabel('Wavelength (nm)');
+zlabel('Relative Reflected Intensity Difference');
+view(2);
+colorbar;
